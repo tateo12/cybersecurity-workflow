@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>cybersecurity workflow // tate.henricksen</title>
+<meta name="description" content="A production security automation agent: cloud and code findings in, triaged JIRA tickets out. Built and shipped by Tate Henricksen.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oxanium:wght@400;600;700;800&family=Red+Hat+Mono:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='80' font-size='80'>&#x25B8;</text></svg>">
+</head>
+<body>
+
+<div class="grain" aria-hidden="true"></div>
+
+<!-- ============ HEADER ============ -->
+<header class="site-header">
+  <div class="header-id">tate.henricksen</div>
+  <nav class="header-nav">
+    <a href="#run">live run</a>
+    <a href="#pipeline">pipeline</a>
+    <a href="#decisions">decisions</a>
+    <a href="#ticket">output</a>
+  </nav>
+</header>
+
+<!-- ============ HERO ============ -->
+<section class="hero">
+  <div class="hero-meta">
+    <span class="badge badge-live"><span class="pulse-dot"></span>RUNNING IN PRODUCTION</span>
+    <span class="badge">AZURE FUNCTIONS · DAILY 06:00 UTC</span>
+    <span class="badge">PYTHON 3.12</span>
+  </div>
+  <h1 class="hero-title">CYBERSECURITY<br><span class="hero-accent">WORKFLOW</span></h1>
+  <p class="hero-sub">
+    An autonomous security agent that ingests findings from
+    <strong>Microsoft Defender for Cloud</strong> and the <strong>Datadog Security API</strong>,
+    normalizes them into one model, deduplicates against every open ticket,
+    routes by severity and ownership, and files triaged JIRA tickets across
+    three team backlogs. Every morning. No human in the loop.
+  </p>
+  <div class="hero-stats">
+    <div class="stat"><span class="stat-num" data-count="2">2</span><span class="stat-label">finding sources</span></div>
+    <div class="stat"><span class="stat-num" data-count="5">5</span><span class="stat-label">scan types</span></div>
+    <div class="stat"><span class="stat-num" data-count="3">3</span><span class="stat-label">JIRA projects routed</span></div>
+    <div class="stat"><span class="stat-num" data-count="0">0</span><span class="stat-label">duplicate tickets filed</span></div>
+  </div>
+  <div class="hero-scroll">scroll for a replayed production run <span class="arrow">&darr;</span></div>
+</section>
+
+<!-- ============ TERMINAL ============ -->
+<section class="section" id="run">
+  <div class="section-head">
+    <span class="section-kicker">01 / THE AGENT AT WORK</span>
+    <h2>One morning run, replayed</h2>
+    <p class="section-note">
+      Real run structure, real log format, <em>synthetic data</em>: every finding,
+      resource name, and ticket below is fabricated for this demo.
+    </p>
+  </div>
+
+  <div class="terminal" id="terminal">
+    <div class="terminal-bar">
+      <div class="term-dots"><span></span><span></span><span></span></div>
+      <div class="term-title">security-agent &mdash; timer trigger &mdash; 06:00:00 UTC</div>
+      <button class="term-replay" id="replayBtn" type="button">&#x21bb; replay</button>
+    </div>
+    <div class="terminal-body" id="termBody" aria-live="polite"></div>
+  </div>
+</section>
+
+<!-- ============ PIPELINE ============ -->
+<section class="section" id="pipeline">
+  <div class="section-head">
+    <span class="section-kicker">02 / ARCHITECTURE</span>
+    <h2>Findings in, tickets out</h2>
+  </div>
+
+  <div class="pipeline">
+    <div class="pipe-stage" style="--i:0">
+      <div class="pipe-num">A</div>
+      <h3>Ingest</h3>
+      <p>Defender for Cloud via Azure Resource Graph (one query per subscription). Datadog SAST, SCA, API Security &amp; IaC via paginated REST.</p>
+    </div>
+    <div class="pipe-arrow" aria-hidden="true">&#x25B8;</div>
+    <div class="pipe-stage" style="--i:1">
+      <div class="pipe-num">B</div>
+      <h3>Normalize</h3>
+      <p>Every source collapses into one frozen <code>Finding</code> dataclass: severity, rule, target, fix, references. Sources are plugins behind a common base.</p>
+    </div>
+    <div class="pipe-arrow" aria-hidden="true">&#x25B8;</div>
+    <div class="pipe-stage" style="--i:2">
+      <div class="pipe-num">C</div>
+      <h3>Dedup</h3>
+      <p>Stable keys derived from immutable IDs (CVE+package, rule+resource, subscription+assessment) survive title rewrites and resource renames. Searched across <em>all</em> projects.</p>
+    </div>
+    <div class="pipe-arrow" aria-hidden="true">&#x25B8;</div>
+    <div class="pipe-stage" style="--i:3">
+      <div class="pipe-num">D</div>
+      <h3>Route</h3>
+      <p>Severity gate (critical/high daily, medium weekly, low logged), then ownership routing to the right team's backlog. Per-project caps stop flood days.</p>
+    </div>
+    <div class="pipe-arrow" aria-hidden="true">&#x25B8;</div>
+    <div class="pipe-stage" style="--i:4">
+      <div class="pipe-num">E</div>
+      <h3>File</h3>
+      <p>Tickets rendered to Atlassian Document Format with fix guidance, reference links, and dedup labels. Resurfaced findings link back to the closed original.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ DECISIONS ============ -->
+<section class="section" id="decisions">
+  <div class="section-head">
+    <span class="section-kicker">03 / THE INTERESTING PARTS</span>
+    <h2>Decisions the agent makes so humans don't have to</h2>
+  </div>
+
+  <div class="cards">
+    <article class="card">
+      <h3><span class="card-glyph">&#x2916;</span> Cross-source dedup</h3>
+      <p>If Datadog SCA and Defender both flag the same CVE on the same package, that is <strong>one ticket</strong>, not two. Dedup keys are source-agnostic where the underlying vuln is.</p>
+      <code class="card-code">cve::cve-2024-21538::cross-spawn</code>
+    </article>
+    <article class="card">
+      <h3><span class="card-glyph">&#x2696;</span> Risk ranking inside a severity</h3>
+      <p>Two Highs are not equal. A CVSS 8.9 outranks a 7.1; a Defender finding tagged "Internet exposed" + "Sensitive data" outranks "Missing patch." The agent files the scariest first.</p>
+      <code class="card-code">priority_score &rarr; cvss | len(risk_factors)</code>
+    </article>
+    <article class="card">
+      <h3><span class="card-glyph">&#x2387;</span> Ownership routing</h3>
+      <p>Container and code findings go to the platform team. VM findings go to IT ops. Identity findings and everything unrouted land with security. First match wins, each with its own assignee and epic.</p>
+      <code class="card-code">routing: CYBER | AN | IT</code>
+    </article>
+    <article class="card">
+      <h3><span class="card-glyph">&#x267A;</span> Resurfacing, not re-spamming</h3>
+      <p>A finding whose ticket was closed but which shows up again gets a <em>new</em> ticket with a link back to the original, so regressions are visible without nagging on open work.</p>
+      <code class="card-code">Resurfaced: was CYBER-217 &rarr; link-back</code>
+    </article>
+    <article class="card">
+      <h3><span class="card-glyph">&#x2702;</span> Suppression with receipts</h3>
+      <p>False positives are suppressed in version-controlled config with a reason and owner, never silently dropped. Suppression counts print in every run summary.</p>
+      <code class="card-code">config/suppressions.yml</code>
+    </article>
+    <article class="card">
+      <h3><span class="card-glyph">&#x26A1;</span> Zero secrets on disk</h3>
+      <p>Locally, credentials are injected per-process from a password manager at runtime. In production they live in Function App config. Nothing in the repo, nothing in a dotfile.</p>
+      <code class="card-code">op run -- python -m src.main</code>
+    </article>
+  </div>
+</section>
+
+<!-- ============ TICKET ============ -->
+<section class="section" id="ticket">
+  <div class="section-head">
+    <span class="section-kicker">04 / WHAT LANDS IN THE BACKLOG</span>
+    <h2>The output is a ticket an engineer can act on</h2>
+    <p class="section-note">Synthetic example, rendered the way the agent formats real ones.</p>
+  </div>
+
+  <div class="ticket">
+    <div class="ticket-head">
+      <span class="ticket-key">AN-1207</span>
+      <span class="ticket-type">&#x25A0; Security Finding</span>
+      <span class="sev sev-high">HIGH</span>
+    </div>
+    <h3 class="ticket-summary">[DATADOG SCA][CVE-2025-32996] http-proxy-middleware: request smuggling via malformed headers</h3>
+    <div class="ticket-grid">
+      <div class="ticket-field"><span>Target</span><code>acme-portal &middot; package.json</code></div>
+      <div class="ticket-field"><span>CVSS</span><code>8.1 (High)</code></div>
+      <div class="ticket-field"><span>Dedup label</span><code>cve::cve-2025-32996::http-proxy-middleware</code></div>
+      <div class="ticket-field"><span>Assignee</span><code>platform-team triage</code></div>
+    </div>
+    <div class="ticket-body">
+      <h4>Recommended fix</h4>
+      <p>Upgrade <code>http-proxy-middleware</code> from <code>2.0.6</code> to <code>&ge;3.0.5</code>. No breaking API changes in the upgrade path for this usage.</p>
+      <h4>References</h4>
+      <p class="ticket-refs">NVD advisory &middot; GitHub Security Advisory &middot; Datadog finding</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ STACK / FOOTER ============ -->
+<section class="section section-stack">
+  <div class="stack-strip">
+    <span>PYTHON 3.12</span><span class="sep">/</span>
+    <span>AZURE FUNCTIONS</span><span class="sep">/</span>
+    <span>AZURE RESOURCE GRAPH</span><span class="sep">/</span>
+    <span>DATADOG SECURITY API</span><span class="sep">/</span>
+    <span>JIRA REST + ADF</span><span class="sep">/</span>
+    <span>PYTEST</span><span class="sep">/</span>
+    <span>1PASSWORD CLI</span>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="footer-main">
+    <div>
+      <div class="footer-title">Built and shipped by <strong>Tate Henricksen</strong> with Ethan</div>
+      <div class="footer-sub">Running in production at a corporate travel company since 2026. Source is private; everything on this page is synthetic demo data.</div>
+    </div>
+    <div class="footer-mark">&#x25B8;_</div>
+  </div>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>
